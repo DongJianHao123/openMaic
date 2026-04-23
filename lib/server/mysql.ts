@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * MySQL Database Connection
  *
@@ -273,10 +274,11 @@ export async function getClassroomFromMysql(
 ): Promise<{ id: string; stage: unknown; scenes: unknown[]; createdAt: Date } | null> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT id, stage, scenes, created_at FROM maic_classroom WHERE id = ?',
       [id]
-    ) as Array<Array<{ id: string; stage: unknown; scenes: unknown; created_at: Date }>>;
+    );
+    const rows = result as unknown as Array<{ id: string; stage: unknown; scenes: unknown; created_at: Date }>;
 
     if (rows.length === 0) {
       return null;
@@ -313,9 +315,10 @@ export async function deleteClassroomFromMysql(id: string): Promise<void> {
 export async function listClassroomsFromMysql(): Promise<Array<{ id: string; createdAt: Date }>> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT id, created_at FROM maic_classroom ORDER BY created_at DESC'
-    ) as Array<Array<{ id: string; created_at: Date }>>;
+    );
+    const rows = result as unknown as Array<{ id: string; created_at: Date }>;
 
     return rows.map((row) => ({
       id: row.id,
@@ -378,10 +381,11 @@ export async function saveStage(stage: StageRecord): Promise<void> {
 export async function getStage(stageId: string): Promise<StageRecord | null> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_stages WHERE id = ?',
       [stageId]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       id: string;
       name: string;
       description: string | null;
@@ -392,7 +396,7 @@ export async function getStage(stageId: string): Promise<StageRecord | null> {
       current_scene_id: string | null;
       agent_ids: string | null;
       generated_agent_configs: string | null;
-    }>>;
+    }>;
 
     if (rows.length === 0) {
       return null;
@@ -408,7 +412,7 @@ export async function getStage(stageId: string): Promise<StageRecord | null> {
       language: row.language ?? undefined,
       style: row.style ?? undefined,
       currentSceneId: row.current_scene_id ?? undefined,
-      agentIds: row.agent_ids ? safeJsonParse(row.agent_ids) : undefined,
+      agentIds: row.agent_ids ? safeJsonParse(row.agent_ids) as string[] : undefined,
       generatedAgentConfigs: row.generated_agent_configs ? safeJsonParse(row.generated_agent_configs) : undefined,
     };
   } finally {
@@ -429,9 +433,10 @@ export async function deleteStage(stageId: string): Promise<void> {
 export async function listStages(): Promise<Array<{ id: string; name: string; description?: string; createdAt: number; updatedAt: number }>> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT id, name, description, created_at, updated_at FROM maic_stages ORDER BY updated_at DESC'
-    ) as Array<Array<{ id: string; name: string; description: string | null; created_at: number; updated_at: number }>>;
+    );
+    const rows = result as unknown as Array<{ id: string; name: string; description: string | null; created_at: number; updated_at: number }>;
 
     return rows.map((row) => ({
       id: row.id,
@@ -455,7 +460,7 @@ export interface SceneRecord {
   order: number;
   content?: unknown;
   actions?: unknown[];
-  whiteboard?: unknown[];
+  whiteboards?: unknown[];
   createdAt: number;
   updatedAt: number;
 }
@@ -480,7 +485,7 @@ export async function saveScenes(stageId: string, scenes: SceneRecord[]): Promis
           scene.order,
           scene.content ? JSON.stringify(scene.content) : null,
           scene.actions ? JSON.stringify(scene.actions) : null,
-          scene.whiteboard ? JSON.stringify(scene.whiteboard) : null,
+          scene.whiteboards ? JSON.stringify(scene.whiteboards) : null,
           scene.createdAt,
           scene.updatedAt
         );
@@ -488,7 +493,7 @@ export async function saveScenes(stageId: string, scenes: SceneRecord[]): Promis
       await connection.execute(
         `INSERT INTO maic_scenes (id, stage_id, type, title, \`order\`, content, actions, whiteboard, created_at, updated_at)
          VALUES ${placeholders}`,
-        values
+        !values
       );
     }
 
@@ -505,10 +510,11 @@ export async function saveScenes(stageId: string, scenes: SceneRecord[]): Promis
 export async function getScenes(stageId: string): Promise<SceneRecord[]> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_scenes WHERE stage_id = ? ORDER BY \`order\`',
       [stageId]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       id: string;
       stage_id: string;
       type: string;
@@ -519,7 +525,7 @@ export async function getScenes(stageId: string): Promise<SceneRecord[]> {
       whiteboard: unknown;
       created_at: number;
       updated_at: number;
-    }>>;
+    }>;
 
     return rows.map((row) => ({
       id: row.id,
@@ -529,10 +535,10 @@ export async function getScenes(stageId: string): Promise<SceneRecord[]> {
       order: row.order,
       content: row.content ? safeJsonParse(row.content) : undefined,
       actions: row.actions ? safeJsonParse(row.actions) : undefined,
-      whiteboard: row.whiteboard ? safeJsonParse(row.whiteboard) : undefined,
+      whiteboards: row.whiteboard ? safeJsonParse(row.whiteboard) : undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-    }));
+    })) as SceneRecord[];
   } finally {
     connection.release();
   }
@@ -584,10 +590,11 @@ export async function saveAudioFile(record: AudioFileRecord): Promise<void> {
 export async function getAudioFile(id: string): Promise<AudioFileRecord | null> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_audio_files WHERE id = ?',
       [id]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       id: string;
       blob: Buffer;
       duration: number | null;
@@ -596,7 +603,7 @@ export async function getAudioFile(id: string): Promise<AudioFileRecord | null> 
       voice: string | null;
       created_at: number;
       oss_key: string | null;
-    }>>;
+    }>;
 
     if (rows.length === 0) {
       return null;
@@ -624,7 +631,7 @@ export async function getAudioFile(id: string): Promise<AudioFileRecord | null> 
 export async function getAudioFilesForClassroom(classroomId: string): Promise<AudioFileRecord[]> {
   const connection = await getMysqlPool().getConnection();
   try {
-    let audioIds: Set<string> = new Set();
+    const audioIds: Set<string> = new Set();
 
     try {
       // First try to get scenes from maic_scenes table
@@ -653,7 +660,7 @@ export async function getAudioFilesForClassroom(classroomId: string): Promise<Au
         const [classroomRows] = await connection.execute(
           'SELECT scenes FROM maic_classroom WHERE id = ?',
           [classroomId]
-        ) as Array<Array<{ scenes: string }>>;
+        ) as unknown as Array<Array<{ scenes: string }>>;
 
         if (classroomRows.length > 0) {
           // Parse scenes from legacy table
@@ -694,10 +701,11 @@ export async function getAudioFilesForClassroom(classroomId: string): Promise<Au
     if (audioIds.size === 0) return [];
 
     // Get all audio files
-    const [audioRows] = await connection.execute(
+    const [result] = await connection.execute(
       `SELECT * FROM maic_audio_files WHERE id IN (${Array.from(audioIds).map(() => '?').join(',')})`,
       Array.from(audioIds)
-    ) as Array<Array<any>>;
+    );
+    const audioRows = result as unknown as Array<any>;
 
     return audioRows.map(row => ({
       id: row.id,
@@ -779,10 +787,11 @@ export async function saveMediaFile(record: MediaFileRecord): Promise<void> {
 export async function getMediaFile(id: string): Promise<MediaFileRecord | null> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_media_files WHERE id = ?',
       [id]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       id: string;
       stage_id: string;
       type: 'image' | 'video';
@@ -797,7 +806,7 @@ export async function getMediaFile(id: string): Promise<MediaFileRecord | null> 
       oss_key: string | null;
       poster_oss_key: string | null;
       created_at: number;
-    }>>;
+    }>;
 
     if (rows.length === 0) {
       return null;
@@ -828,10 +837,11 @@ export async function getMediaFile(id: string): Promise<MediaFileRecord | null> 
 export async function getMediaFilesByStage(stageId: string): Promise<MediaFileRecord[]> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_media_files WHERE stage_id = ?',
       [stageId]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       id: string;
       stage_id: string;
       type: 'image' | 'video';
@@ -846,7 +856,7 @@ export async function getMediaFilesByStage(stageId: string): Promise<MediaFileRe
       oss_key: string | null;
       poster_oss_key: string | null;
       created_at: number;
-    }>>;
+    }>;
 
     return rows.map((row) => ({
       id: row.id,
@@ -917,7 +927,7 @@ export async function saveChatSessions(stageId: string, sessions: ChatSessionRec
       await connection.execute(
         `INSERT INTO maic_chat_sessions (id, stage_id, type, title, status, messages, config, tool_calls, pending_tool_calls, created_at, updated_at, scene_id, last_action_index)
          VALUES ${placeholders}`,
-        values
+        !values
       );
     }
 
@@ -934,10 +944,11 @@ export async function saveChatSessions(stageId: string, sessions: ChatSessionRec
 export async function getChatSessions(stageId: string): Promise<ChatSessionRecord[]> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_chat_sessions WHERE stage_id = ? ORDER BY created_at',
       [stageId]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       id: string;
       stage_id: string;
       type: string;
@@ -951,7 +962,7 @@ export async function getChatSessions(stageId: string): Promise<ChatSessionRecor
       updated_at: number;
       scene_id: string | null;
       last_action_index: number | null;
-    }>>;
+    }>;
 
     return rows.map((row) => ({
       id: row.id,
@@ -967,7 +978,7 @@ export async function getChatSessions(stageId: string): Promise<ChatSessionRecor
       updatedAt: row.updated_at,
       sceneId: row.scene_id ?? undefined,
       lastActionIndex: row.last_action_index ?? undefined,
-    }));
+    })) as ChatSessionRecord[];
   } finally {
     connection.release();
   }
@@ -1013,7 +1024,7 @@ export async function saveGeneratedAgents(stageId: string, agents: GeneratedAgen
       await connection.execute(
         `INSERT INTO maic_generated_agents (id, stage_id, name, role, persona, avatar, color, priority, created_at)
          VALUES ${placeholders}`,
-        values
+        !values
       );
     }
 
@@ -1030,10 +1041,11 @@ export async function saveGeneratedAgents(stageId: string, agents: GeneratedAgen
 export async function getGeneratedAgents(stageId: string): Promise<GeneratedAgentRecord[]> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_generated_agents WHERE stage_id = ?',
       [stageId]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       id: string;
       stage_id: string;
       name: string;
@@ -1043,7 +1055,7 @@ export async function getGeneratedAgents(stageId: string): Promise<GeneratedAgen
       color: string;
       priority: number;
       created_at: number;
-    }>>;
+    }>;
 
     return rows.map((row) => ({
       id: row.id,
@@ -1099,16 +1111,17 @@ export async function savePlaybackState(state: PlaybackStateRecord): Promise<voi
 export async function getPlaybackState(stageId: string): Promise<PlaybackStateRecord | null> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_playback_state WHERE stage_id = ?',
       [stageId]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       stage_id: string;
       scene_index: number;
       action_index: number;
       consumed_discussions: string;
       updated_at: number;
-    }>>;
+    }>;
 
     if (rows.length === 0) {
       return null;
@@ -1161,15 +1174,16 @@ export async function saveStageOutlines(outlines: StageOutlinesRecord): Promise<
 export async function getStageOutlines(stageId: string): Promise<StageOutlinesRecord | null> {
   const connection = await getMysqlPool().getConnection();
   try {
-    const [rows] = await connection.execute(
+    const [result] = await connection.execute(
       'SELECT * FROM maic_stage_outlines WHERE stage_id = ?',
       [stageId]
-    ) as Array<Array<{
+    );
+    const rows = result as unknown as Array<{
       stage_id: string;
       outlines: string;
       created_at: number;
       updated_at: number;
-    }>>;
+    }>;
 
     if (rows.length === 0) {
       return null;

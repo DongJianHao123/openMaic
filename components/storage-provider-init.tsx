@@ -136,7 +136,7 @@ export function StorageProviderInit() {
         order: scene.order ?? index,
         content: scene.content,
         actions: scene.actions,
-        whiteboard: scene.whiteboard,
+        whiteboards: scene.whiteboards,
         createdAt: scene.createdAt || now,
         updatedAt: scene.updatedAt || now,
       }));

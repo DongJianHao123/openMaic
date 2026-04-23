@@ -193,7 +193,8 @@ async function countMySQLClassrooms(): Promise<number> {
     const { getMysqlPool } = await import('@/lib/server/mysql');
     const connection = await getMysqlPool().getConnection();
     try {
-      const [rows] = await connection.execute('SELECT COUNT(*) as count FROM maic_classroom') as Array<Array<{ count: number }>>;
+      const [result] = await connection.execute('SELECT COUNT(*) as count FROM maic_classroom');
+      const rows = result as unknown as Array<{ count: number }>;
       return rows[0]?.count || 0;
     } finally {
       connection.release();

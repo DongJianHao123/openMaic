@@ -143,8 +143,8 @@ export interface MediaFileRecord {
   mimeType: string; // image/png, video/mp4
   size: number;
   poster?: Blob; // Video thumbnail blob
-  prompt: string; // Original prompt (for retry)
-  params: string; // JSON-serialized generation params
+  prompt?: string; // Original prompt (for retry)
+  params?: string; // JSON-serialized generation params
   error?: string; // If set, this is a failed task (blob is empty placeholder)
   errorCode?: string; // Structured error code (e.g. 'CONTENT_SENSITIVE')
   ossKey?: string; // Full CDN URL for this media blob

@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import { apiSuccess, apiError } from '@/lib/server/api-response';
+import { apiSuccess, apiError, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createLogger } from '@/lib/logger';
 import { initDatabaseTables, getMediaFilesByStage } from '@/lib/server/mysql';
 
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   try {
     const id = req.nextUrl.searchParams.get('id');
     if (!id) {
-      return apiError('Missing required parameter: id', 400);
+      return apiError(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 400, 'Missing required parameter: id');
     }
 
     await initDatabaseTables();
@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
     return apiSuccess({ mediaFiles: mediaFilesWithBase64 });
   } catch (error) {
     log.error('Failed to get classroom media:', error);
-    return apiError('Failed to get classroom media', 500);
+    const errorMsg = error instanceof Error ? error.message : 'Failed to get classroom media';
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, errorMsg);
   }
 }

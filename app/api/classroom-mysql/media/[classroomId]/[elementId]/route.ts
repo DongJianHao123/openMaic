@@ -18,7 +18,9 @@ export async function GET(
       return NextResponse.json({ error: 'Media not found' }, { status: 404 });
     }
 
-    return new NextResponse(mediaRecord.blob, {
+    // Convert Buffer to Uint8Array for NextResponse
+    const mediaData = new Uint8Array(mediaRecord.blob);
+    return new NextResponse(mediaData, {
       status: 200,
       headers: {
         'Content-Type': mediaRecord.mimeType,

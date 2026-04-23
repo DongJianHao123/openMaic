@@ -38,7 +38,9 @@ export async function GET(
         break;
     }
 
-    return new NextResponse(audioRecord.blob, {
+    // Convert Buffer to Uint8Array for NextResponse
+    const audioData = new Uint8Array(audioRecord.blob);
+    return new NextResponse(audioData, {
       status: 200,
       headers: {
         'Content-Type': mimeType,

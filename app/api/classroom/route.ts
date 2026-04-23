@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         order: scene.order ?? index,
         content: scene.content,
         actions: scene.actions,
-        whiteboard: scene.whiteboard,
+        whiteboards: scene.whiteboards,
         createdAt: (scene as any).createdAt || now,
         updatedAt: (scene as any).updatedAt || now,
       }));
@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
               order: s.order,
               content: s.content,
               actions: s.actions,
-              whiteboard: s.whiteboard,
+              whiteboards: s.whiteboards,
             })),
             createdAt: new Date(stageRecord.createdAt).toISOString(),
           };
